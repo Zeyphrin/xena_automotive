@@ -1,5 +1,5 @@
 @extends('layouts.app')
-@section('title', 'My Rentals — DriveElite')
+@section('title', 'My Rentals — Xena Automotive')
 
 @section('content')
 <div class="max-w-7xl mx-auto px-6 py-12">
