@@ -87,12 +87,12 @@
                                 @forelse($recent_rentals as $rental)
                                     <tr class="hover:bg-gray-50 transition-colors">
                                         <td class="px-6 py-4 whitespace-nowrap">
-                                            <div class="font-medium text-gray-900">{{ $rental->user->name }}</div>
-                                            <div class="text-xs text-gray-500">{{ $rental->user->phone }}</div>
+                                            <div class="font-medium text-gray-900">{{ $rental->user?->name ?? '-' }}</div>
+                                            <div class="text-xs text-gray-500">{{ $rental->user?->phone ?? '-' }}</div>
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap">
-                                            <div class="font-medium">{{ $rental->car->brand }} {{ $rental->car->model }}</div>
-                                            <div class="text-xs text-gray-500">{{ $rental->car->plate_number }}</div>
+                                            <div class="font-medium">{{ $rental->car?->brand }} {{ $rental->car?->model }}</div>
+                                            <div class="text-xs text-gray-500">{{ $rental->car?->plate_number ?? '-' }}</div>
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm">
                                             {{ \Carbon\Carbon::parse($rental->start_date)->format('d M Y') }} - 
