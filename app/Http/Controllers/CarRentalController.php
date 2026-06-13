@@ -5,54 +5,83 @@ namespace App\Http\Controllers;
 use App\Models\Car;
 use App\Models\Rental;
 use Illuminate\Http\Request;
-use Carbon\Carbon; // Tambahkan ini untuk kalkulasi durasi hari
+use Illuminate\Support\Facades\Auth;
+use Carbon\Carbon;
 
 class CarRentalController extends Controller
 {
+    // ==========================================
+    // 1. Menampilkan Halaman Utama (Fleet / Daftar Mobil)
+    // ==========================================
     public function index()
     {
-        // PERBAIKAN 1: Ubah query untuk menggunakan kolom 'status'
+        // Hanya tampilkan mobil yang statusnya available
         $cars = Car::where('status', 'available')->latest()->paginate(9);
+        
         return view('cars.index', compact('cars'));
     }
 
+    // ==========================================
+    // 2. Menampilkan Halaman Detail Mobil
+    // ==========================================
     public function show(Car $car)
     {
         return view('cars.show', compact('car'));
     }
 
+    // ==========================================
+    // 3. Memproses Pemesanan (Booking) dari Kustomer
+    // ==========================================
     public function book(Request $request, Car $car)
     {
-        // PERBAIKAN 2: Sesuaikan validasi dengan nama kolom di form dan database
-        $validated = $request->validate([
-            'start_date'  => 'required|date|after_or_equal:today',
-            'end_date'    => 'required|date|after:start_date',
+        // Validasi input
+        $request->validate([
+            'start_date' => 'required|date|after_or_equal:today',
+            'end_date' => 'required|date|after_or_equal:start_date',
+            'phone' => 'required|regex:/^[0-9]+$/|min:9|max:15',
+            'payment_method' => 'required|string',
+        ], [
+            'phone.regex' => 'Nomor telepon hanya boleh berisi angka saja.',
+            'end_date.after_or_equal' => 'Tanggal pengembalian tidak boleh sebelum tanggal penjemputan.'
         ]);
 
-        // Kalkulasi Total Harga (Harga per hari dikali jumlah hari)
-        $start = Carbon::parse($validated['start_date']);
-        $end = Carbon::parse($validated['end_date']);
+        // Hitung durasi hari
+        $start = Carbon::parse($request->start_date);
+        $end = Carbon::parse($request->end_date);
         $days = $start->diffInDays($end);
         
-        // Memastikan minimal sewa adalah 1 hari jika start dan end di hari yang sama
-        $rentDays = $days > 0 ? $days : 1; 
-        $totalPrice = $rentDays * $car->price_per_day;
+        // Jika sewa dan kembali di hari yang sama, hitung 1 hari
+        if ($days == 0) { $days = 1; }
 
-        // Simpan ke database sesuai arsitektur yang benar
+        $totalPrice = $days * $car->price_per_day;
+
+        // Simpan transaksi
         Rental::create([
-            'car_id'      => $car->id,
-            'user_id'     => auth()->id(), // Mengambil ID dari user yang sedang login
-            'start_date'  => $validated['start_date'],
-            'end_date'    => $validated['end_date'],
+            'user_id' => Auth::id(),
+            'car_id' => $car->id,
+            'start_date' => $request->start_date,
+            'end_date' => $request->end_date,
             'total_price' => $totalPrice,
-            'status'      => 'pending', // Menggunakan enum 'pending'
+            'fine_amount' => 0,
+            'status' => 'pending', 
         ]);
 
-        return redirect()->route('dashboard')->with('success', 'Booking berhasil dibuat. Silakan lakukan pembayaran.');
+        // Simpan nomor HP terbaru user ke tabel users jika berubah
+        $user = Auth::user();
+        if (!$user->phone || $user->phone !== $request->phone) {
+            $user->update(['phone' => $request->phone]);
+        }
+
+        // Kembali ke halaman sebelumnya agar Modal Pop-Up Centang Biru muncul
+        return redirect()->back()->with('success', 'Berhasil booking armada dengan metode pembayaran ' . ucwords(str_replace('_', ' ', $request->payment_method)));
     }
 
+    // ==========================================
+    // 4. Menampilkan Halaman Dashboard Kustomer (My Rental)
+    // ==========================================
     public function dashboard()
     {
+        // Menarik data sewa spesifik milik user yang sedang login
         $rentals = Rental::with('car')
             ->where('user_id', auth()->id())
             ->latest()
@@ -60,4 +89,4 @@ class CarRentalController extends Controller
 
         return view('dashboard.index', compact('rentals'));
     }
-}   
+}

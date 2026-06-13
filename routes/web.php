@@ -8,10 +8,13 @@ use App\Http\Controllers\Admin\RentalController;
 use App\Http\Controllers\Admin\CustomerController;
 use App\Http\Controllers\Admin\PeminjamanController;
 use App\Http\Controllers\Admin\PengembalianController;
+use App\Http\Controllers\ProfileController;
 
 Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login')->middleware('guest');
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+Route::get('/register', [AuthController::class, 'showRegisterForm'])->name('register')->middleware('guest');
+Route::post('/register', [AuthController::class, 'register'])->middleware('guest');
 
 Route::get('/', [CarRentalController::class, 'index'])->name('cars.index');
 Route::get('/cars/{car}', [CarRentalController::class, 'show'])->name('cars.show');
@@ -19,6 +22,8 @@ Route::post('/cars/{car}/book', [CarRentalController::class, 'book'])->name('car
 
 Route::middleware(['auth'])->group(function () {
     Route::get('/dashboard', [CarRentalController::class, 'dashboard'])->name('dashboard');
+    Route::get('/profile/edit', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::put('/profile/update', [ProfileController::class, 'update'])->name('profile.update');
 
 Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
     
@@ -63,5 +68,13 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::get('/pengembalian', [PengembalianController::class, 'index'])->name('pengembalian.index');
     Route::get('/pengembalian/{rental}/proses', [PengembalianController::class, 'proses'])->name('pengembalian.proses');
     Route::patch('/pengembalian/{rental}/store', [PengembalianController::class, 'store'])->name('pengembalian.store');
+});
+
+Route::middleware(['auth'])->group(function () {
+    // Rute halaman detail mobil
+    Route::get('/cars/{car}', [CarRentalController::class, 'show'])->name('cars.show');
+    
+    // Rute untuk memproses formulir sewa kustomer
+    Route::post('/cars/{car}/rent', [CarRentalController::class, 'storeRent'])->name('cars.rent');
 });
 });
