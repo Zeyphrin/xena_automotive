@@ -21,12 +21,12 @@
         }
     ],
     "env": {
-        "APP_ENV": "production",
-        "APP_DEBUG": "false",
-        "CACHE_DRIVER": "array",
-        "SESSION_DRIVER": "cookie",
-        "QUEUE_CONNECTION": "sync",
-        "VIEW_COMPILED_PATH": "/tmp",
-        "LOG_CHANNEL": "stderr"
-    }
+    "APP_ENV": "production",
+    "APP_DEBUG": "false",
+    "CACHE_DRIVER": "array",
+    "SESSION_DRIVER": "cookie",
+    "QUEUE_CONNECTION": "sync",
+    "VIEW_COMPILED_PATH": "/tmp",
+    "LOG_CHANNEL": "stderr"
+}
 }
